@@ -8,6 +8,7 @@ import 'package:get/get.dart';
 import 'package:printing/printing.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
+import 'package:path/path.dart' as p;
 
 final Uint8List fontData = File('assets/fonts/Hancom Gothic Regular.ttf').readAsBytesSync();
 final ttf = pw.Font.ttf(fontData.buffer.asByteData());
@@ -109,9 +110,27 @@ class _SonikCalcPageState extends State<SonikCalcPage> {
     final mime = await controller.getFileMIME(event);
     final bytes = await controller.getFileSize(event);
     final url = await controller.createFileUrl(event);
-    final fileData = await controller.getFileData(event);
-    final file = File.fromRawPath(fileData);
-    final file2 = File(url);
-    print('name: $name, mime: $mime, bytes: $bytes, url: $url, test: $file2');
+    final file = await controller.getFileData(event);
+
+    //* validate if mime type is excel
+    if (mime == 'application/docxconverter' ||
+        mime == 'application/haansoftxlsx' ||
+        mime == 'application/kset' ||
+        mime == 'application/vnd.ms-excel.12' ||
+        mime == 'application/vnd.openxmlformats-officedocument.spreadsheetml.shee' ||
+        mime == 'x-softmaker-pm') {
+      final reader = Excel.decodeBytes(file.buffer.asUint8List());
+
+      // print reader table
+      for (var table in reader.tables.keys) {
+        print(table); //sheet Name
+        print(reader.tables[table]!.maxCols);
+        print(reader.tables[table]!.maxRows);
+        for (var row in reader.tables[table]!.rows) {
+          print('$row');
+        }
+      }
+    } else return;
+    print('name: $name, mime: $mime, bytes: $bytes, url: $url');
   }
 }
